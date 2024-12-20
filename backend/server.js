@@ -7,7 +7,12 @@ const { DateTime } = require('luxon');
 const prisma = new PrismaClient();
 const app = express();
 
-app.use(cors());
+const allowedOrigins = [process.env.FRONTEND_URL || 'http://localhost:3000']; // Use environment variable or fallback to localhost
+app.use(cors({
+  origin: allowedOrigins,
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true, // Allow cookies if necessary
+}));
 app.use(express.json());
 
 // CRUD Routes

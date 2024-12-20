@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const BASE_URL = 'http://localhost:5000';
+const BASE_URL = 'https://student-dashboard-backend-89ff.onrender.com';
 
 const EditStudentModal = ({ isOpen, onClose, student, onStudentUpdated, onStudentDeleted }) => {
   const [formData, setFormData] = useState({

@@ -3,17 +3,23 @@ import axios from 'axios';
 
 const BASE_URL = 'https://student-dashboard-backend-89ff.onrender.com';
 
-const EditStudentModal = ({ isOpen, onClose, student, onStudentUpdated, onStudentDeleted }) => {
+const EditStudentModal = ({
+  isOpen,
+  onClose,
+  student,
+  onStudentUpdated,
+  onStudentDeleted,
+}) => {
   const [formData, setFormData] = useState({
-    name: student?.name || '',
-    cohort: student?.cohort || '',
+    name: student?.name || "",
+    cohort: student?.cohort || "",
     courses: student?.courses || [],
-    date_joined: student?.date_joined || '',
-    last_login: student?.last_login || '',
-    status: student?.status || 'active',
+    date_joined: student?.date_joined || "",
+    last_login: student?.last_login || "",
+    status: student?.status || "active",
   });
 
-  const [successMessage, setSuccessMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
     if (student) {
@@ -21,22 +27,33 @@ const EditStudentModal = ({ isOpen, onClose, student, onStudentUpdated, onStuden
         name: student.name,
         cohort: student.cohort,
         courses: student.courses,
-        date_joined: student.date_joined ? formatDateTimeInput(student.date_joined) : '',
-        last_login: student.last_login ? formatDateTimeInput(student.last_login) : '',
-        status: student.status || 'active',
+        date_joined: student.date_joined
+          ? formatDateTimeInput(student.date_joined)
+          : "",
+        last_login: student.last_login
+          ? formatDateTimeInput(student.last_login)
+          : "",
+        status: student.status || "active",
       });
     }
   }, [student]);
 
-  // Format date to 'YYYY-MM-DDTHH:mm' for datetime-local input
   const formatDateTimeInput = (date) => {
-    if (!date) return '';
+    if (!date) return "";
+
     const parsedDate = new Date(date);
-    const year = parsedDate.getFullYear();
-    const month = String(parsedDate.getMonth() + 1).padStart(2, '0');
-    const day = String(parsedDate.getDate()).padStart(2, '0');
-    const hours = String(parsedDate.getHours()).padStart(2, '0');
-    const minutes = String(parsedDate.getMinutes()).padStart(2, '0');
+
+    // Adjust the time to the local timezone before displaying
+    const localDate = new Date(
+      parsedDate.getTime() - parsedDate.getTimezoneOffset() * 60000 
+    );
+
+    const year = localDate.getFullYear();
+    const month = String(localDate.getMonth() + 1).padStart(2, "0");
+    const day = String(localDate.getDate()).padStart(2, "0");
+    const hours = String(localDate.getHours()+1).padStart(2, "0");
+    const minutes = String(localDate.getMinutes()).padStart(2, "0");
+
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
@@ -44,9 +61,8 @@ const EditStudentModal = ({ isOpen, onClose, student, onStudentUpdated, onStuden
     const { name, value } = e.target;
 
     // Handle datetime fields
-    if (name === 'date_joined' || name === 'last_login') {
-      const formattedDate = formatDateTimeInput(value); // Ensure the date is in the correct format
-      setFormData({ ...formData, [name]: formattedDate });
+    if (name === "date_joined" || name === "last_login") {
+      setFormData({ ...formData, [name]: value }); // No need to format here, already formatted
     } else {
       setFormData({ ...formData, [name]: value });
     }
@@ -59,7 +75,7 @@ const EditStudentModal = ({ isOpen, onClose, student, onStudentUpdated, onStuden
   };
 
   const addCourse = () => {
-    setFormData({ ...formData, courses: [...formData.courses, ''] });
+    setFormData({ ...formData, courses: [...formData.courses, ""] });
   };
 
   const removeCourse = (index) => {
@@ -70,23 +86,42 @@ const EditStudentModal = ({ isOpen, onClose, student, onStudentUpdated, onStuden
   const handleSubmit = async (e, mode) => {
     e.preventDefault();
     try {
-      if (mode === 'update') {
-        const response = await axios.put(`${BASE_URL}/students/${student.id}`, formData);
+      const updatedData = { ...formData };
+
+      // Convert date fields to UTC if present
+      if (updatedData.date_joined) {
+        updatedData.date_joined = convertToUTC(updatedData.date_joined);
+      }
+      if (updatedData.last_login) {
+        updatedData.last_login = convertToUTC(updatedData.last_login);
+      }
+
+      if (mode === "update") {
+        const response = await axios.put(
+          `${BASE_URL}/students/${student.id}`,
+          updatedData
+        );
         onStudentUpdated(response.data);
-        setSuccessMessage('Student data updated successfully!');
-      } else if (mode === 'delete') {
+        setSuccessMessage("Student data updated successfully!");
+      } else if (mode === "delete") {
         await axios.delete(`${BASE_URL}/students/${student.id}`);
         onStudentDeleted(student.id);
-        setSuccessMessage('Student deleted successfully!');
+        setSuccessMessage("Student deleted successfully!");
       }
 
       setTimeout(() => {
-        setSuccessMessage('');
+        setSuccessMessage("");
         onClose();
       }, 1000);
     } catch (error) {
       console.error(`Error during ${mode} operation:`, error);
     }
+  };
+
+  // Helper function to convert local time to UTC
+  const convertToUTC = (localDate) => {
+    const date = new Date(localDate); // Local date
+    return date.toISOString(); // Converts to UTC string automatically
   };
 
   if (!isOpen) return null;
@@ -197,14 +232,14 @@ const EditStudentModal = ({ isOpen, onClose, student, onStudentUpdated, onStuden
             <button
               type="button"
               className="px-4 py-2 bg-red-500 text-white rounded-lg"
-              onClick={(e) => handleSubmit(e, 'delete')}
+              onClick={(e) => handleSubmit(e, "delete")}
             >
               Delete
             </button>
             <button
               type="button"
               className="px-4 py-2 bg-green-500 text-white rounded-lg"
-              onClick={(e) => handleSubmit(e, 'update')}
+              onClick={(e) => handleSubmit(e, "update")}
             >
               Update
             </button>

@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useDispatch } from 'react-redux';
 import { setStudents } from '../store/studentsSlice';
 
-const BASE_URL = 'http://localhost:5000';
+const BASE_URL = 'https://student-dashboard-backend-89ff.onrender.com';
 
 const AddStudentModal = ({ isOpen, onClose }) => {
   const [student, setStudent] = useState({

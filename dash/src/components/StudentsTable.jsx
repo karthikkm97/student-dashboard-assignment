@@ -9,7 +9,7 @@ import { DateTime } from 'luxon';  // Import Luxon for date handling
 import c1 from '../image/c1.png';
 import c2 from '../image/c2.png';
 
-const BASE_URL = 'http://localhost:5000';
+const BASE_URL = 'https://student-dashboard-backend-89ff.onrender.com';
 
 const StudentsTable = () => {
   const [isModalOpen, setModalOpen] = useState(false);

@@ -1,7 +1,7 @@
 import React from 'react';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
-import StudentsTable from './components/StudentsTable'; // Fix typo here
+import StudentsTable from './components/StudentsTable';
 
 const App = () => {
   return (

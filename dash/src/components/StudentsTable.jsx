@@ -68,16 +68,23 @@ const StudentsTable = () => {
     closeEditModal();
   };
 
-  // Helper function to format date only (using Luxon)
-  const formatDate = (dateString) => {
-    const date = DateTime.fromISO(dateString);
-    return date.isValid ? date.toLocaleString(DateTime.DATE_MED) : 'N/A';
-  };
-  
-  const formatDateTime = (dateString) => {
-    const date = DateTime.fromISO(dateString);
-    return date.isValid ? date.toLocaleString(DateTime.DATETIME_MED) : 'N/A';
-  };
+// Helper function to format date only (using Luxon)
+const formatDate = (dateString) => {
+  // Parse the date as UTC or in local time, depending on what the backend is sending
+  const date = DateTime.fromISO(dateString, { setZone: true }); // This will preserve the timezone information
+  return date.isValid ? date.toLocaleString(DateTime.DATE_MED) : "Invalid Date";
+};
+
+// Helper function to format date-time (using Luxon)
+const formatDateTime = (dateString) => {
+  // Parse the date with timezone information
+  const date = DateTime.fromISO(dateString, { setZone: true });
+  return date.isValid
+    ? date.toLocaleString(DateTime.DATETIME_MED)
+    : "Invalid Date";
+};
+
+
 
   return (
     <div className="bg-white rounded-lg shadow-lg">
@@ -184,3 +191,4 @@ const StudentsTable = () => {
 };
 
 export default StudentsTable;
+

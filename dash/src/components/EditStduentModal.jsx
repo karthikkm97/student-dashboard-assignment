@@ -111,11 +111,12 @@ const EditStudentModal = ({
     }
   };
 
-  // Helper function to convert local time to UTC
   const convertToUTC = (localDate) => {
+    // The datetime-local value is in local time, so just append "Z" for UTC storage
     const date = new Date(localDate);
-    return date.toISOString();
+    return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString();
   };
+  
 
   if (!isOpen) return null;
 

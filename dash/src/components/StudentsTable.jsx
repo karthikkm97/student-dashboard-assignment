@@ -70,19 +70,18 @@ const StudentsTable = () => {
 
 // Helper function to format date only (using Luxon)
 const formatDate = (dateString) => {
-  // Parse the date as UTC or in local time, depending on what the backend is sending
-  const date = DateTime.fromISO(dateString, { setZone: true }); // This will preserve the timezone information
+  const date = DateTime.fromISO(dateString, { zone: 'utc' }); // Parse as UTC
   return date.isValid ? date.toLocaleString(DateTime.DATE_MED) : "Invalid Date";
 };
 
 // Helper function to format date-time (using Luxon)
 const formatDateTime = (dateString) => {
-  // Parse the date with timezone information
-  const date = DateTime.fromISO(dateString, { setZone: true });
+  const date = DateTime.fromISO(dateString, { zone: 'utc' }); // Parse as UTC
   return date.isValid
     ? date.toLocaleString(DateTime.DATETIME_MED)
     : "Invalid Date";
 };
+
 
 
 

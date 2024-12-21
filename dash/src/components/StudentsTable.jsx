@@ -11,7 +11,6 @@ import c2 from '../image/c2.png';
 
 const BASE_URL = 'https://student-dashboard-backend-89ff.onrender.com';
 
-
 const StudentsTable = () => {
   const [isModalOpen, setModalOpen] = useState(false);
   const [isEditModalOpen, setEditModalOpen] = useState(false); // Manage Edit Modal
@@ -31,36 +30,24 @@ const StudentsTable = () => {
     setEditModalOpen(false);
   };
 
-  const [isFetching, setIsFetching] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
-  
-  const fetchStudents = async () => {
-    if (isFetching || !hasMore) return;
-    setIsFetching(true);
-  
-    try {
-      const response = await axios.get(`${BASE_URL}/students`, {
-        params: { offset: students.length, limit: 20 },
-      });
-      setStudents((prev) => [...prev, ...response.data]);
-      if (response.data.length < 20) setHasMore(false);
-    } catch (error) {
-      console.error('Error fetching students:', error);
-    } finally {
-      setIsFetching(false);
-    }
-  };
-  
   useEffect(() => {
+    // Fetch student data from the backend on initial load
+    const fetchStudents = async () => {
+      try {
+        const response = await axios.get(`${BASE_URL}/students/`);
+        
+        // Sort students in ascending order based on 'name' or 'date_joined'
+        const sortedStudents = response.data.sort((a, b) => a.name.localeCompare(b.name)); // Ascending order by name
+  
+        // Dispatch data to Redux store
+        dispatch(setStudents(sortedStudents));
+      } catch (error) {
+        console.error('Error fetching students:', error);
+      }
+    };
+  
     fetchStudents();
-  }, []);
-  
-  window.onscroll = () => {
-    if (window.innerHeight + document.documentElement.scrollTop >= document.documentElement.offsetHeight - 100) {
-      fetchStudents();
-    }
-  };
-  
+  }, [dispatch]);
   
   
   
@@ -81,16 +68,23 @@ const StudentsTable = () => {
     closeEditModal();
   };
 
-  // Helper function to format date only (using Luxon)
-  const formatDate = (dateString) => {
-    const date = DateTime.fromISO(dateString);
-    return date.isValid ? date.toLocaleString(DateTime.DATE_MED) : 'N/A';
-  };
-  
-  const formatDateTime = (dateString) => {
-    const date = DateTime.fromISO(dateString);
-    return date.isValid ? date.toLocaleString(DateTime.DATETIME_MED) : 'N/A';
-  };
+// Helper function to format date only (using Luxon)
+const formatDate = (dateString) => {
+  // Parse the date as UTC or in local time, depending on what the backend is sending
+  const date = DateTime.fromISO(dateString, { setZone: true }); // This will preserve the timezone information
+  return date.isValid ? date.toLocaleString(DateTime.DATE_MED) : "Invalid Date";
+};
+
+// Helper function to format date-time (using Luxon)
+const formatDateTime = (dateString) => {
+  // Parse the date with timezone information
+  const date = DateTime.fromISO(dateString, { setZone: true });
+  return date.isValid
+    ? date.toLocaleString(DateTime.DATETIME_MED)
+    : "Invalid Date";
+};
+
+
 
   return (
     <div className="bg-white rounded-lg shadow-lg">

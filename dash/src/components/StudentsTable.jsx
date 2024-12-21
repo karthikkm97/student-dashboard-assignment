@@ -1,26 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
 import AddStudentModal from './AddStudentModal';
-import EditStudentModal from './EditStudentModal';
+import EditStudentModal from './EditStduentModal';
 import { useDispatch, useSelector } from 'react-redux';
 import { setStudents } from '../store/studentsSlice';
 import axios from 'axios';
-import { FixedSizeList } from 'react-window'; // For virtualization
-import { DateTime } from 'luxon'; // Import Luxon for date handling
+import { DateTime } from 'luxon';  // Import Luxon for date handling
 import c1 from '../image/c1.png';
 import c2 from '../image/c2.png';
 
 const BASE_URL = 'https://student-dashboard-backend-89ff.onrender.com';
 
+
 const StudentsTable = () => {
   const [isModalOpen, setModalOpen] = useState(false);
   const [isEditModalOpen, setEditModalOpen] = useState(false); // Manage Edit Modal
-  const [selectedStudent, setSelectedStudent] = useState(null); // Store selected student for edit
-  const [page, setPage] = useState(1); // Current page number
-  const [pageSize] = useState(20); // Number of students per page
-  const [hasMore, setHasMore] = useState(true); // To track if more students are available
-  const [loading, setLoading] = useState(false); // Track loading state
   const students = useSelector((state) => state.students);
+  const [selectedStudent, setSelectedStudent] = useState(null); // Store selected student for edit
   const dispatch = useDispatch();
 
   const openAddModal = () => setModalOpen(true);
@@ -35,94 +31,65 @@ const StudentsTable = () => {
     setEditModalOpen(false);
   };
 
+  const [isFetching, setIsFetching] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  
   const fetchStudents = async () => {
-    if (loading || !hasMore) return;
-
-    setLoading(true);
+    if (isFetching || !hasMore) return;
+    setIsFetching(true);
+  
     try {
       const response = await axios.get(`${BASE_URL}/students`, {
-        params: { page, size: pageSize },
+        params: { offset: students.length, limit: 20 },
       });
-
-      const fetchedStudents = response.data;
-
-      // If fewer students are returned than pageSize, there are no more students to fetch
-      if (fetchedStudents.length < pageSize) {
-        setHasMore(false);
-      }
-
-      dispatch(setStudents([...students, ...fetchedStudents]));
+      setStudents((prev) => [...prev, ...response.data]);
+      if (response.data.length < 20) setHasMore(false);
     } catch (error) {
       console.error('Error fetching students:', error);
     } finally {
-      setLoading(false);
+      setIsFetching(false);
     }
   };
-
+  
   useEffect(() => {
     fetchStudents();
-  }, [page]);
+  }, []);
+  
+  window.onscroll = () => {
+    if (window.innerHeight + document.documentElement.scrollTop >= document.documentElement.offsetHeight - 100) {
+      fetchStudents();
+    }
+  };
+  
+  
+  
+  
 
-  // Helper function to format date
+  // Handle student updates
+  const onStudentUpdated = (updatedStudent) => {
+    const updatedStudents = students.map((student) =>
+      student.id === updatedStudent.id ? updatedStudent : student
+    );
+    dispatch(setStudents(updatedStudents));
+    closeEditModal();
+  };
+
+  // Handle student deletion
+  const onStudentDeleted = (deletedStudentId) => {
+    const updatedStudents = students.filter((student) => student.id !== deletedStudentId);
+    dispatch(setStudents(updatedStudents));
+    closeEditModal();
+  };
+
+  // Helper function to format date only (using Luxon)
   const formatDate = (dateString) => {
     const date = DateTime.fromISO(dateString);
     return date.isValid ? date.toLocaleString(DateTime.DATE_MED) : 'N/A';
   };
-
+  
   const formatDateTime = (dateString) => {
     const date = DateTime.fromISO(dateString);
     return date.isValid ? date.toLocaleString(DateTime.DATETIME_MED) : 'N/A';
-  };
-
-  const loadMoreStudents = () => {
-    if (!loading && hasMore) {
-      setPage((prevPage) => prevPage + 1);
-    }
-  };
-
-  const Row = ({ index, style }) => {
-    const student = students[index];
-    if (!student) return null;
-
-    return (
-      <div style={style} className="border-b last:border-b-0 hover:bg-gray-50 flex">
-        <div
-          className="px-4 py-3 text-sm font-medium text-blue-600 cursor-pointer w-1/6"
-          onClick={() => openEditModal(student)}
-        >
-          {student.name}
-        </div>
-        <div className="px-4 py-3 text-sm text-gray-600 w-1/6">{student.cohort}</div>
-        <div className="px-4 py-3 w-1/6">
-          <div className="flex gap-2 items-center">
-            {student.courses.map((course, i) => {
-              const defaultImage = i % 2 === 0 ? c1 : c2;
-              return (
-                <div key={i} className="flex items-center gap-2">
-                  <img
-                    src={student.photoUrl || defaultImage}
-                    alt="course-icon"
-                    className="w-6 h-6 rounded-full"
-                  />
-                  <div className="px-2 py-1 bg-gray-100 text-xs rounded font-medium text-gray-600">
-                    {course}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-        <div className="px-4 py-3 text-sm text-gray-600 w-1/6">{formatDate(student.date_joined)}</div>
-        <div className="px-4 py-3 text-sm text-gray-600 w-1/6">{formatDateTime(student.last_login)}</div>
-        <div className="px-4 py-3 w-1/6">
-          <span
-            className={`h-3 w-3 inline-block rounded-full ${
-              student.status === 'active' ? 'bg-green-500' : 'bg-red-500'
-            }`}
-          ></span>
-        </div>
-      </div>
-    );
   };
 
   return (
@@ -148,23 +115,71 @@ const StudentsTable = () => {
       </div>
 
       {/* Table Section */}
-      {students.length > 0 ? (
-        <FixedSizeList
-          height={400}
-          itemCount={students.length}
-          itemSize={60}
-          onScroll={({ scrollDirection, scrollOffset }) => {
-            if (scrollDirection === 'forward' && scrollOffset > students.length * 60 - 200) {
-              loadMoreStudents();
-            }
-          }}
-          itemData={students}
-        >
-          {Row}
-        </FixedSizeList>
-      ) : (
-        <div className="text-center py-4 text-gray-600">No students available</div>
-      )}
+      <table className="w-full text-left">
+        <thead>
+          <tr className="text-gray-500 text-sm border-b">
+            <th className="px-4 py-3 font-medium">Student Name</th>
+            <th className="px-4 py-3 font-medium">Cohort</th>
+            <th className="px-4 py-3 font-medium">Courses</th>
+            <th className="px-4 py-3 font-medium">Date Joined</th>
+            <th className="px-4 py-3 font-medium">Last login</th>
+            <th className="px-4 py-3 font-medium">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {students && students.length > 0 ? (
+            students.map((student) => (
+              <tr key={student.id} className="border-b last:border-b-0 hover:bg-gray-50">
+                <td
+                  className="px-4 py-3 text-sm font-medium text-blue-600 cursor-pointer"
+                  onClick={() => openEditModal(student)}
+                >
+                  {student.name}
+                </td>
+                <td className="px-4 py-3 text-sm text-gray-600">{student.cohort}</td>
+                <td className="px-4 py-3">
+                  <div className="flex gap-2 items-center">
+                    {student.courses.map((course, i) => {
+                      const defaultImage = i % 2 === 0 ? c1 : c2;
+                      return (
+                        <div key={i} className="flex items-center gap-2">
+                          <img
+                            src={student.photoUrl || defaultImage}
+                            alt="course-icon"
+                            className="w-6 h-6 rounded-full"
+                          />
+                          <div className="px-2 py-1 bg-gray-100 text-xs rounded font-medium text-gray-600">
+                            {course}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </td>
+                <td className="px-4 py-3 text-sm text-gray-600">
+                  {formatDate(student.date_joined)}
+                </td>
+                <td className="px-4 py-3 text-sm text-gray-600">
+                  {formatDateTime(student.last_login)}
+                </td>
+                <td className="px-4 py-3">
+                  <span
+                    className={`h-3 w-3 inline-block rounded-full ${
+                      student.status === 'active' ? 'bg-green-500' : 'bg-red-500'
+                    }`}
+                  ></span>
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="6" className="text-center py-4 text-gray-600">
+                No students available
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
 
       {/* Modals */}
       <AddStudentModal isOpen={isModalOpen} onClose={closeAddModal} />
@@ -173,6 +188,8 @@ const StudentsTable = () => {
           isOpen={isEditModalOpen}
           onClose={closeEditModal}
           student={selectedStudent}
+          onStudentUpdated={onStudentUpdated}
+          onStudentDeleted={onStudentDeleted}
         />
       )}
     </div>

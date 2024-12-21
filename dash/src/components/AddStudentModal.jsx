@@ -15,7 +15,6 @@ const AddStudentModal = ({ isOpen, onClose }) => {
     lastLogin: '',
   });
 
-  const [successMessage, setSuccessMessage] = useState('');
   const dispatch = useDispatch();
 
   const handleChange = (e) => {
@@ -52,37 +51,35 @@ const AddStudentModal = ({ isOpen, onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
-    // Log the values before sending to the backend to confirm they are correct
+
     console.log("Date Joined: ", student.dateJoined);
     console.log("Last Login: ", student.lastLogin);
-  
+
     const studentData = {
       ...student,
       dateJoined: student.dateJoined ? student.dateJoined : null,
       lastLogin: student.lastLogin ? student.lastLogin : null,
     };
-  
+
     if (!studentData.name || !studentData.cohort) {
       alert('Please fill in all required fields.');
       return;
     }
-  
+
     try {
       await axios.post(`${BASE_URL}/students`, studentData);
-  
+
       const response = await axios.get(`${BASE_URL}/students`);
       dispatch(setStudents(response.data));
-  
-      setSuccessMessage('Student added successfully!');
-      setTimeout(() => {
-        onClose();
-        setSuccessMessage('');
-      }, 1000);
+
+      // Show success message in an alert box
+      window.alert('Student added successfully!');
+
+      onClose();
     } catch (error) {
       console.error('Error adding student:', error);
     }
-  
+
     setStudent({
       name: '',
       cohort: '',
@@ -92,7 +89,6 @@ const AddStudentModal = ({ isOpen, onClose }) => {
       lastLogin: '',
     });
   };
-  
 
   if (!isOpen) return null;
 
@@ -100,8 +96,6 @@ const AddStudentModal = ({ isOpen, onClose }) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
       <div className="bg-white p-6 rounded-lg w-96">
         <h2 className="text-lg font-semibold mb-4">Add New Student</h2>
-
-        {successMessage && <div className="mb-4 text-green-600">{successMessage}</div>}
 
         <form onSubmit={handleSubmit}>
           <div className="mb-4">

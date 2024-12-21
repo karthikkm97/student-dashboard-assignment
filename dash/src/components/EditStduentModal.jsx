@@ -19,8 +19,6 @@ const EditStudentModal = ({
     status: student?.status || "active",
   });
 
-  const [successMessage, setSuccessMessage] = useState("");
-
   useEffect(() => {
     if (student) {
       setFormData({
@@ -43,15 +41,14 @@ const EditStudentModal = ({
 
     const parsedDate = new Date(date);
 
-    // Adjust the time to the local timezone before displaying
     const localDate = new Date(
-      parsedDate.getTime() - parsedDate.getTimezoneOffset() * 60000 
+      parsedDate.getTime() - parsedDate.getTimezoneOffset() * 60000
     );
 
     const year = localDate.getFullYear();
     const month = String(localDate.getMonth() + 1).padStart(2, "0");
     const day = String(localDate.getDate()).padStart(2, "0");
-    const hours = String(localDate.getHours()+1).padStart(2, "0");
+    const hours = String(localDate.getHours() + 1).padStart(2, "0");
     const minutes = String(localDate.getMinutes()).padStart(2, "0");
 
     return `${year}-${month}-${day}T${hours}:${minutes}`;
@@ -59,13 +56,7 @@ const EditStudentModal = ({
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-
-    // Handle datetime fields
-    if (name === "date_joined" || name === "last_login") {
-      setFormData({ ...formData, [name]: value }); // No need to format here, already formatted
-    } else {
-      setFormData({ ...formData, [name]: value });
-    }
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleCoursesChange = (e, index) => {
@@ -102,17 +93,19 @@ const EditStudentModal = ({
           updatedData
         );
         onStudentUpdated(response.data);
-        setSuccessMessage("Student data updated successfully!");
+
+        // Show success message in alert box
+        window.alert("Student data updated successfully!");
+
       } else if (mode === "delete") {
         await axios.delete(`${BASE_URL}/students/${student.id}`);
         onStudentDeleted(student.id);
-        setSuccessMessage("Student deleted successfully!");
+
+        // Show success message in alert box
+        window.alert("Student deleted successfully!");
       }
 
-      setTimeout(() => {
-        setSuccessMessage("");
-        onClose();
-      }, 1000);
+      onClose();
     } catch (error) {
       console.error(`Error during ${mode} operation:`, error);
     }
@@ -120,8 +113,8 @@ const EditStudentModal = ({
 
   // Helper function to convert local time to UTC
   const convertToUTC = (localDate) => {
-    const date = new Date(localDate); // Local date
-    return date.toISOString(); // Converts to UTC string automatically
+    const date = new Date(localDate);
+    return date.toISOString();
   };
 
   if (!isOpen) return null;
@@ -130,10 +123,6 @@ const EditStudentModal = ({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
       <div className="bg-white rounded-lg shadow-lg w-1/3 p-6">
         <h2 className="text-lg font-medium mb-4">Update Student Details</h2>
-
-        {successMessage && (
-          <div className="mb-4 text-green-600">{successMessage}</div>
-        )}
 
         <form className="space-y-4">
           <div>
@@ -184,7 +173,6 @@ const EditStudentModal = ({
             </button>
           </div>
 
-          {/* Date Joined */}
           <div>
             <label className="block text-sm font-medium">Date Joined</label>
             <input
@@ -196,7 +184,6 @@ const EditStudentModal = ({
             />
           </div>
 
-          {/* Last Login */}
           <div>
             <label className="block text-sm font-medium">Last Login</label>
             <input
@@ -251,3 +238,4 @@ const EditStudentModal = ({
 };
 
 export default EditStudentModal;
+
